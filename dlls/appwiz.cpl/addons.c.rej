@@ -1,0 +1,15 @@
+--- dlls/appwiz.cpl/addons.c
++++ dlls/appwiz.cpl/addons.c
+@@ -58,10 +58,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
+ #define GECKO_SHA "???"
+ #endif
+ 
+-#define MONO_VERSION "7.1.5"
++#define MONO_VERSION "7.1.1"
+ #if defined(__i386__) || defined(__x86_64__)
+ #define MONO_ARCH "x86"
+-#define MONO_SHA "cb03854b5d868b2d0912da42e01536bb673e009ed5263f4eeb8836a2a9c36f43"
++#define MONO_SHA "9dc8e5603b7bc64354eb94ae4ea0f6821424767a3ff44ff0d19e346a490c11ea"
+ #else
+ #define MONO_ARCH ""
+ #define MONO_SHA "???"

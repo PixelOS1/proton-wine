@@ -2850,7 +2850,6 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     EXCEPTION_RECORD rec = { 0 };
     struct xcontext context;
     ucontext_t *ucontext = sigcontext;
-    void *steamclient_addr = NULL;
 
     if (TRAP_sig(ucontext) == TRAP_x86_PROTFLT && ERROR_sig(ucontext) == ((0x29 << 3) | 2))
     {
@@ -2893,11 +2892,6 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
-        if ((steamclient_addr = steamclient_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09 )))
-        {
-            RIP_sig(ucontext) = (intptr_t)steamclient_addr;
-            return;
-        }
 
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (ERROR_sig(ucontext) >> 1) & 0x09;

@@ -1037,7 +1037,6 @@ static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
     }
 }
 
-
 /***********************************************************************
  * TrackMouseEvent [USER32]
  *

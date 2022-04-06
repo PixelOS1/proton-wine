@@ -656,6 +656,8 @@ LDAP_LIBS
 LDAP_CFLAGS
 RT_LIBS
 MSVCRTFLAGS
+GCRYPT_LIBS
+GCRYPT_CFLAGS
 VKD3D_SHADER_LIBS
 VKD3D_SHADER_CFLAGS
 VKD3D_LIBS
@@ -698,6 +700,8 @@ USB_LIBS
 USB_CFLAGS
 SANE_LIBS
 SANE_CFLAGS
+GMP_LIBS
+GMP_CFLAGS
 GNUTLS_LIBS
 GNUTLS_CFLAGS
 DBUS_LIBS
@@ -890,6 +894,7 @@ with_dbus
 with_float_abi
 with_fontconfig
 with_freetype
+with_gcrypt
 with_gettext
 with_gettextpo
 with_gphoto
@@ -1193,6 +1198,7 @@ enable_atl80
 enable_atl90
 enable_atlthunk
 enable_atmlib
+enable_audioses
 enable_authz
 enable_avicap32
 enable_avifil32
@@ -1297,6 +1303,7 @@ enable_devenum
 enable_dhcpcsvc
 enable_dhcpcsvc6
 enable_dhtmled_ocx
+enable_diasymreader
 enable_difxapi
 enable_dinput
 enable_dinput8
@@ -1567,6 +1574,7 @@ enable_ntdll
 enable_ntdsapi
 enable_ntoskrnl_exe
 enable_ntprint
+enable_win32
 enable_nvcuda
 enable_objsel
 enable_odbc32
@@ -1666,6 +1674,7 @@ enable_tdh
 enable_tdi_sys
 enable_traffic
 enable_twain_32
+enable_twinapi_appcore_dll
 enable_tzres
 enable_ucrtbase
 enable_uianimation
@@ -1805,6 +1814,7 @@ enable_xinput1_2
 enable_xinput1_3
 enable_xinput1_4
 enable_xinput9_1_0
+enable_xinputuap
 enable_xmllite
 enable_xolehlp
 enable_xpsprint
@@ -1924,6 +1934,7 @@ enable_wineconsole
 enable_winedbg
 enable_winedevice
 enable_winefile
+enable_winemenubuilder
 enable_winemine
 enable_winemsibuilder
 enable_winepath
@@ -1993,6 +2004,8 @@ DBUS_CFLAGS
 DBUS_LIBS
 GNUTLS_CFLAGS
 GNUTLS_LIBS
+GMP_CFLAGS
+GMP_LIBS
 SANE_CFLAGS
 SANE_LIBS
 USB_CFLAGS
@@ -2029,6 +2042,8 @@ VKD3D_CFLAGS
 VKD3D_LIBS
 VKD3D_SHADER_CFLAGS
 VKD3D_SHADER_LIBS
+GCRYPT_CFLAGS
+GCRYPT_LIBS
 LDAP_CFLAGS
 LDAP_LIBS'
 
@@ -2679,6 +2694,7 @@ Optional Packages:
   --with-float-abi=abi    specify the ABI (soft|softfp|hard) for ARM platforms
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
+  --without-gcrypt        do not use libgcrypt
   --without-gettext       do not use gettext
   --with-gettextpo        use the GetTextPO library to rebuild po files
   --without-gphoto        do not use gphoto (Digital Camera support)
@@ -2792,6 +2808,8 @@ Some influential environment variables:
   GNUTLS_CFLAGS
               C compiler flags for gnutls, overriding pkg-config
   GNUTLS_LIBS Linker flags for gnutls, overriding pkg-config
+  GMP_CFLAGS  C compiler flags for gmp, overriding pkg-config
+  GMP_LIBS    Linker flags for gmp, overriding pkg-config
   SANE_CFLAGS C compiler flags for sane-backends, overriding pkg-config
   SANE_LIBS   Linker flags for sane-backends, overriding pkg-config
   USB_CFLAGS  C compiler flags for libusb-1.0, overriding pkg-config
@@ -2848,6 +2866,9 @@ Some influential environment variables:
               C compiler flags for libvkd3d-shader, overriding pkg-config
   VKD3D_SHADER_LIBS
               Linker flags for libvkd3d-shader, overriding pkg-config
+  GCRYPT_CFLAGS
+              C compiler flags for libgcrypt, overriding pkg-config
+  GCRYPT_LIBS Linker flags for libgcrypt, overriding pkg-config
   LDAP_CFLAGS C compiler flags for openldap, overriding pkg-config
   LDAP_LIBS   Linker flags for openldap, overriding pkg-config
 
@@ -4479,6 +4500,13 @@ fi
 if test ${with_freetype+y}
 then :
   withval=$with_freetype;
+fi
+
+
+# Check whether --with-gcrypt was given.
+if test ${with_gcrypt+y}
+then :
+  withval=$with_gcrypt;
 fi
 
 
@@ -6693,6 +6721,12 @@ enable_win16=${enable_win16:-no}
 enable_win64=${enable_win64:-no}
 enable_wow64=${enable_wow64:-no}
 enable_wow64win=${enable_wow64win:-no}
+if test "x$enable_win64" != "xyes"
+then
+  enable_win32="yes"
+else
+  enable_win32="no"
+fi
 enable_wow64cpu=${enable_wow64cpu:-no}
 
 enable_winetest=${enable_winetest:-$enable_tests}
@@ -8335,6 +8369,12 @@ then :
   printf "%s\n" "#define HAVE_LINUX_PARAM_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "linux/seccomp.h" "ac_cv_header_linux_seccomp_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_seccomp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_SECCOMP_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "linux/serial.h" "ac_cv_header_linux_serial_h" "$ac_includes_default"
 if test "x$ac_cv_header_linux_serial_h" = xyes
 then :
@@ -8507,6 +8547,12 @@ ac_fn_c_check_header_compile "$LINENO" "sys/event.h" "ac_cv_header_sys_event_h" 
 if test "x$ac_cv_header_sys_event_h" = xyes
 then :
   printf "%s\n" "#define HAVE_SYS_EVENT_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "sys/eventfd.h" "ac_cv_header_sys_eventfd_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_eventfd_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_EVENTFD_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/filio.h" "ac_cv_header_sys_filio_h" "$ac_includes_default"
@@ -16190,6 +16236,96 @@ esac
 
 fi
 
+if test "x$with_gnutls" != "xno"
+then
+    if ${GMP_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  GMP_CFLAGS=`$PKG_CONFIG --cflags gmp 2>/dev/null`
+fi
+fi
+
+if ${GMP_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  GMP_LIBS=`$PKG_CONFIG --libs gmp 2>/dev/null`
+fi
+fi
+
+GMP_LIBS=${GMP_LIBS:-"-lgmp"}
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: gmp cflags: $GMP_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: gmp libs: $GMP_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GMP_CFLAGS"
+       for ac_header in gmp.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "gmp.h" "ac_cv_header_gmp_h" "$ac_includes_default"
+if test "x$ac_cv_header_gmp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_GMP_H 1" >>confdefs.h
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lgmp" >&5
+printf %s "checking for -lgmp... " >&6; }
+if test ${ac_cv_lib_soname_gmp+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lgmp $GMP_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char __gmpz_init ();
+int
+main (void)
+{
+return __gmpz_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_gmp=`$ac_cv_path_LDD conftest.exe | grep "gmp" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_gmp=`$OTOOL -L conftest$ac_exeext | grep "libgmp-*\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libgmp-*\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_gmp=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libgmp-*\\.$LIBEXT" | sed -e "s/^.*\\[\\(libgmp-*\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_gmp:+false} :
+then :
+  ac_cv_lib_soname_gmp=`$LDD conftest$ac_exeext | grep "libgmp-*\\.$LIBEXT" | sed -e "s/^.*\(libgmp-*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else $as_nop
+  ac_cv_lib_soname_gmp=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_gmp:+false} :
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf "%s\n" "not found" >&6; }
+       GMP_CFLAGS=""
+else $as_nop
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_gmp" >&5
+printf "%s\n" "$ac_cv_lib_soname_gmp" >&6; }
+
+printf "%s\n" "#define SONAME_LIBGMP \"$ac_cv_lib_soname_gmp\"" >>confdefs.h
+
+
+fi
+fi
+
+done
+CPPFLAGS=$ac_save_CPPFLAGS
+
+fi
+
 if test "x$with_sane" != "xno"
 then
     if ${SANE_CFLAGS:+false} :
@@ -18621,6 +18757,107 @@ esac
 fi
 test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
 
+if test "x$with_gcrypt" != "xno"
+then
+    if ${GCRYPT_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  GCRYPT_CFLAGS=`$PKG_CONFIG --cflags libgcrypt 2>/dev/null`
+fi
+fi
+
+if ${GCRYPT_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  GCRYPT_LIBS=`$PKG_CONFIG --libs libgcrypt 2>/dev/null`
+fi
+fi
+
+
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: libgcrypt cflags: $GCRYPT_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: libgcrypt libs: $GCRYPT_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GCRYPT_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "gcrypt.h" "ac_cv_header_gcrypt_h" "$ac_includes_default"
+if test "x$ac_cv_header_gcrypt_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_GCRYPT_H 1" >>confdefs.h
+
+fi
+
+        if test "$ac_cv_header_gcrypt_h" = "yes"
+        then
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lgcrypt" >&5
+printf %s "checking for -lgcrypt... " >&6; }
+if test ${ac_cv_lib_soname_gcrypt+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lgcrypt $GCRYPT_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char gcry_sexp_build ();
+int
+main (void)
+{
+return gcry_sexp_build ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_gcrypt=`$ac_cv_path_LDD conftest.exe | grep "gcrypt" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_gcrypt=`$OTOOL -L conftest$ac_exeext | grep "libgcrypt\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libgcrypt\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_gcrypt=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libgcrypt\\.$LIBEXT" | sed -e "s/^.*\\[\\(libgcrypt\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_gcrypt:+false} :
+then :
+  ac_cv_lib_soname_gcrypt=`$LDD conftest$ac_exeext | grep "libgcrypt\\.$LIBEXT" | sed -e "s/^.*\(libgcrypt\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else $as_nop
+  ac_cv_lib_soname_gcrypt=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_gcrypt:+false} :
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf "%s\n" "not found" >&6; }
+
+else $as_nop
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_gcrypt" >&5
+printf "%s\n" "$ac_cv_lib_soname_gcrypt" >&6; }
+
+printf "%s\n" "#define SONAME_LIBGCRYPT \"$ac_cv_lib_soname_gcrypt\"" >>confdefs.h
+
+
+fi
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+fi
+if test "x$ac_cv_lib_soname_gcrypt" = "x"
+then :
+  case "x$with_gcrypt" in
+  x)   as_fn_append wine_notices "|libgcrypt ${notice_platform}development files not found, GCRYPT won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libgcrypt ${notice_platform}development files not found, GCRYPT won't be supported.
+This is an error since --with-gcrypt was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 
 if test "x${GCC}" = "xyes"
 then
@@ -19815,6 +20052,12 @@ then :
   printf "%s\n" "#define HAVE_POSIX_FALLOCATE 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "ppoll" "ac_cv_func_ppoll"
+if test "x$ac_cv_func_ppoll" = xyes
+then :
+  printf "%s\n" "#define HAVE_PPOLL 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "prctl" "ac_cv_func_prctl"
 if test "x$ac_cv_func_prctl" = xyes
 then :
@@ -20200,6 +20443,72 @@ fi
     ;;
 esac
 
+ac_save_LIBS=$LIBS
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing shm_open" >&5
+printf %s "checking for library containing shm_open... " >&6; }
+if test ${ac_cv_search_shm_open+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char shm_open ();
+int
+main (void)
+{
+return shm_open ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' rt
+do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_search_shm_open=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext
+  if test ${ac_cv_search_shm_open+y}
+then :
+  break
+fi
+done
+if test ${ac_cv_search_shm_open+y}
+then :
+
+else $as_nop
+  ac_cv_search_shm_open=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_shm_open" >&5
+printf "%s\n" "$ac_cv_search_shm_open" >&6; }
+ac_res=$ac_cv_search_shm_open
+if test "$ac_res" != no
+then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+printf "%s\n" "#define HAVE_SHM_OPEN 1" >>confdefs.h
+
+                test "$ac_res" = "none required" || RT_LIBS="$ac_res"
+
+fi
+
+LIBS=$ac_save_LIBS
+
 if test "x$with_ldap" != "xno"
 then
         if ${LDAP_CFLAGS:+false} :
@@ -20380,6 +20689,43 @@ if test "$wine_cv_have_sched_setaffinity" = "yes"
 then
 
 printf "%s\n" "#define HAVE_SCHED_SETAFFINITY 1" >>confdefs.h
+
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for setpriority" >&5
+printf %s "checking for setpriority... " >&6; }
+if test ${wine_cv_have_setpriority+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define _GNU_SOURCE
+#include <sys/resource.h>
+#include <sys/time.h>
+int
+main (void)
+{
+setpriority(0, 0, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  wine_cv_have_setpriority=yes
+else $as_nop
+  wine_cv_have_setpriority=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_setpriority" >&5
+printf "%s\n" "$wine_cv_have_setpriority" >&6; }
+if test "$wine_cv_have_setpriority" = "yes"
+then
+
+printf "%s\n" "#define HAVE_SETPRIORITY 1" >>confdefs.h
 
 fi
 
@@ -21666,6 +22012,7 @@ wine_fn_config_makefile dlls/atl90 enable_atl90
 wine_fn_config_makefile dlls/atlthunk enable_atlthunk
 wine_fn_config_makefile dlls/atlthunk/tests enable_tests
 wine_fn_config_makefile dlls/atmlib enable_atmlib
+wine_fn_config_makefile dlls/audioses enable_audioses
 wine_fn_config_makefile dlls/authz enable_authz
 wine_fn_config_makefile dlls/avicap32 enable_avicap32
 wine_fn_config_makefile dlls/avifil32 enable_avifil32
@@ -21823,6 +22170,7 @@ wine_fn_config_makefile dlls/dhcpcsvc enable_dhcpcsvc
 wine_fn_config_makefile dlls/dhcpcsvc/tests enable_tests
 wine_fn_config_makefile dlls/dhcpcsvc6 enable_dhcpcsvc6
 wine_fn_config_makefile dlls/dhtmled.ocx enable_dhtmled_ocx
+wine_fn_config_makefile dlls/diasymreader enable_diasymreader
 wine_fn_config_makefile dlls/difxapi enable_difxapi
 wine_fn_config_makefile dlls/dinput enable_dinput
 wine_fn_config_makefile dlls/dinput/tests enable_tests
@@ -22209,7 +22557,11 @@ wine_fn_config_makefile dlls/ntoskrnl.exe enable_ntoskrnl_exe
 wine_fn_config_makefile dlls/ntoskrnl.exe/tests enable_tests
 wine_fn_config_makefile dlls/ntprint enable_ntprint
 wine_fn_config_makefile dlls/ntprint/tests enable_tests
+wine_fn_config_makefile dlls/nvapi enable_win32
+wine_fn_config_makefile dlls/nvapi/tests enable_tests
+wine_fn_config_makefile dlls/nvapi64 enable_win64
 wine_fn_config_makefile dlls/nvcuda enable_nvcuda
+wine_fn_config_makefile dlls/nvcuda/tests enable_tests
 wine_fn_config_makefile dlls/objsel enable_objsel
 wine_fn_config_makefile dlls/odbc32 enable_odbc32
 wine_fn_config_makefile dlls/odbcbcp enable_odbcbcp
@@ -22374,6 +22726,7 @@ wine_fn_config_makefile dlls/twain.dll16 enable_win16
 wine_fn_config_makefile dlls/twain_32 enable_twain_32
 wine_fn_config_makefile dlls/twain_32/tests enable_tests
 wine_fn_config_makefile dlls/typelib.dll16 enable_win16
+wine_fn_config_makefile dlls/twinapi.appcore.dll enable_twinapi_appcore_dll
 wine_fn_config_makefile dlls/tzres enable_tzres
 wine_fn_config_makefile dlls/ucrtbase enable_ucrtbase
 wine_fn_config_makefile dlls/ucrtbase/tests enable_tests
@@ -22580,6 +22933,7 @@ wine_fn_config_makefile dlls/xinput1_3 enable_xinput1_3
 wine_fn_config_makefile dlls/xinput1_3/tests enable_tests
 wine_fn_config_makefile dlls/xinput1_4 enable_xinput1_4
 wine_fn_config_makefile dlls/xinput9_1_0 enable_xinput9_1_0
+wine_fn_config_makefile dlls/xinputuap enable_xinputuap
 wine_fn_config_makefile dlls/xmllite enable_xmllite
 wine_fn_config_makefile dlls/xmllite/tests enable_tests
 wine_fn_config_makefile dlls/xolehlp enable_xolehlp
@@ -22709,6 +23063,7 @@ wine_fn_config_makefile programs/wineconsole enable_wineconsole
 wine_fn_config_makefile programs/winedbg enable_winedbg
 wine_fn_config_makefile programs/winedevice enable_winedevice
 wine_fn_config_makefile programs/winefile enable_winefile
+wine_fn_config_makefile programs/winemenubuilder enable_winemenubuilder
 wine_fn_config_makefile programs/winemine enable_winemine
 wine_fn_config_makefile programs/winemsibuilder enable_winemsibuilder
 wine_fn_config_makefile programs/winepath enable_winepath
@@ -23747,6 +24102,8 @@ DBUS_CFLAGS = $DBUS_CFLAGS
 DBUS_LIBS = $DBUS_LIBS
 GNUTLS_CFLAGS = $GNUTLS_CFLAGS
 GNUTLS_LIBS = $GNUTLS_LIBS
+GMP_CFLAGS = $GMP_CFLAGS
+GMP_LIBS = $GMP_LIBS
 SANE_CFLAGS = $SANE_CFLAGS
 SANE_LIBS = $SANE_LIBS
 USB_CFLAGS = $USB_CFLAGS
@@ -23789,6 +24146,8 @@ VKD3D_CFLAGS = $VKD3D_CFLAGS
 VKD3D_LIBS = $VKD3D_LIBS
 VKD3D_SHADER_CFLAGS = $VKD3D_SHADER_CFLAGS
 VKD3D_SHADER_LIBS = $VKD3D_SHADER_LIBS
+GCRYPT_CFLAGS = $GCRYPT_CFLAGS
+GCRYPT_LIBS = $GCRYPT_LIBS
 MSVCRTFLAGS = $MSVCRTFLAGS
 RT_LIBS = $RT_LIBS
 LDAP_CFLAGS = $LDAP_CFLAGS

@@ -66,12 +66,21 @@ static struct fs_monitor_size fs_monitor_sizes[] =
     {800, 600},   /*  4:3 */
     {1024, 768},  /*  4:3 */
     {1600, 1200}, /*  4:3 */
-    {960, 540},   /* 16:9 */
-    {1280, 720},  /* 16:9 */
+    {960, 540},   /* 16:9 - 'FSR 1080p Performance' */
+    {1130, 635},  /* 16:9 - 'FSR 1080p Balanced' */
+    {1280, 720},  /* 16:9 - 'FSR 1440p Performance, 1080p Quality' */
+    {1477, 831},  /* 16:9 - 'FSR 1080p Ultra Quality' */
+    {1506, 847},  /* 16:9 - 'FSR 1440p Balanced' */
     {1600, 900},  /* 16:9 */
-    {1920, 1080}, /* 16:9 */
-    {2560, 1440}, /* 16:9 */
+    {1706, 960},  /* 16:9 - 'FSR 1440p Quality' */
+    {1920, 1080}, /* 16:9 - 'FSR 2160p Performance' */
+    {1970, 1108}, /* 16:9 - 'FSR 1440p Ultra Quality' */
+    {2259, 1270}, /* 16:9 - 'FSR 2160p Balanced' */
+    {2560, 1440}, /* 16:9 - 'FSR 2160p Quality' */
+    {2304, 1296}, /* 16:9 */
+    {2048, 1152}, /* 16:9 */
     {2880, 1620}, /* 16:9 */
+    {2954, 1662}, /* 16:9 - 'FSR 2160p Ultra Quality' */
     {3200, 1800}, /* 16:9 */
     {1440, 900},  /*  8:5 */
     {1680, 1050}, /*  8:5 */
@@ -79,11 +88,18 @@ static struct fs_monitor_size fs_monitor_sizes[] =
     {2560, 1600}, /*  8:5 */
     {1440, 960},  /*  3:2 */
     {1920, 1280}, /*  3:2 */
-    {2560, 1080}, /* 21:9 ultra-wide */
     {1920, 800},  /* 12:5 */
     {3840, 1600}, /* 12:5 */
+    {1720, 720}, /* 21:9 - 'FSR ultra-wide Performance' */
+    {2024, 847}, /* 21:9 - 'FSR ultra-wide Balanced' */
+    {2293, 960}, /* 21:9 - 'FSR ultra-wide Quality' */
+    {2560, 1080}, /* 21:9 ultra-wide */
+    {2646, 1108}, /* 21:9 - 'FSR ultra-wide Ultra Quality' */
+    {3440, 1440}, /* 21:9 ultra-wide */
     {1280, 1024}, /*  5:4 */
 };
+
+static struct fs_monitor_size fake_current_resolution;
 
 /* A fake monitor for the fullscreen hack */
 struct fs_monitor
@@ -239,13 +255,30 @@ static BOOL fs_monitor_add_modes(struct fs_monitor *fs_monitor)
     return TRUE;
 }
 
+BOOL fs_hack_is_fake_current_res(struct fs_monitor_size* fixed_size)
+{
+    fixed_size->width = 0;
+    fixed_size->height = 0;
+    const char *e = getenv("WINE_FULLSCREEN_FAKE_CURRENT_RES");
+    if (e) 
+    {
+        const int n = sscanf(e,"%dx%d",&(fixed_size->width),&(fixed_size->height));
+        if (n==2) 
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /* Add a fake monitor to fs_monitors list.
  * Call this function with fs_section entered */
 static BOOL fs_add_monitor(const WCHAR *device_name)
 {
     struct fs_monitor *fs_monitor;
-    DEVMODEW real_mode;
+    DEVMODEW real_mode, user_mode;
     ULONG_PTR real_id;
+    double scale;
 
     if (!real_settings_handler.get_id(device_name, &real_id))
         return FALSE;
@@ -256,11 +289,33 @@ static BOOL fs_add_monitor(const WCHAR *device_name)
     if (!(fs_monitor = heap_alloc(sizeof(*fs_monitor))))
         return FALSE;
 
-    fs_monitor->user_mode = real_mode;
+    user_mode = real_mode;
+
+    if (fs_hack_is_fake_current_res(&fake_current_resolution)) {
+        user_mode.dmPelsWidth = fake_current_resolution.width;
+        user_mode.dmPelsHeight = fake_current_resolution.height;
+        TRACE("is_fake_current_res: %dx%d", fake_current_resolution.width, fake_current_resolution.height);
+    }
+
+    fs_monitor->user_mode = user_mode;
     fs_monitor->real_mode = real_mode;
-    fs_monitor->user_to_real_scale = 1.0;
-    fs_monitor->top_left.x = real_mode.u1.s2.dmPosition.x;
-    fs_monitor->top_left.y = real_mode.u1.s2.dmPosition.y;
+    /* If real mode is narrower than fake mode, scale to fit width */
+    if ((double)real_mode.dmPelsWidth / (double)real_mode.dmPelsHeight
+             < (double)user_mode.dmPelsWidth / (double)user_mode.dmPelsHeight)
+    {
+        scale = (double)real_mode.dmPelsWidth / (double)user_mode.dmPelsWidth;
+        fs_monitor->user_to_real_scale = scale;
+        fs_monitor->top_left.x = real_mode.u1.s2.dmPosition.x;
+        fs_monitor->top_left.y = real_mode.u1.s2.dmPosition.y + (real_mode.dmPelsHeight - user_mode.dmPelsHeight * scale) / 2;
+    }
+    /* Else scale to fit height */
+    else
+    {
+        scale = (double)real_mode.dmPelsHeight / (double)user_mode.dmPelsHeight;
+        fs_monitor->user_to_real_scale = scale;
+        fs_monitor->top_left.x = real_mode.u1.s2.dmPosition.x + (real_mode.dmPelsWidth - user_mode.dmPelsWidth * scale) / 2;
+        fs_monitor->top_left.y = real_mode.u1.s2.dmPosition.y;
+    }
     lstrcpyW(fs_monitor->user_mode.dmDeviceName, device_name);
     if (!fs_monitor_add_modes(fs_monitor))
     {
@@ -363,6 +418,10 @@ static BOOL fs_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
     if (fs_monitor)
     {
         *mode = fs_monitor->user_mode;
+        if (fake_current_resolution.width != 0 && fake_current_resolution.height != 0) {
+            mode->dmPelsWidth=fake_current_resolution.width;
+            mode->dmPelsHeight=fake_current_resolution.height;
+        }
         LeaveCriticalSection(&fs_section);
         return TRUE;
     }
@@ -533,6 +592,28 @@ BOOL fs_hack_is_integer(void)
     }
     TRACE("is_interger_scaling: %s\n", is_int ? "TRUE" : "FALSE");
     return is_int;
+}
+
+BOOL fs_hack_is_fsr(float *sharpness)
+{
+    static int is_fsr = -1;
+    int sharpness_int = 2;
+    if (is_fsr < 0)
+    {
+        const char *e = getenv("WINE_FULLSCREEN_FSR");
+        is_fsr = e && strcmp(e, "0");
+    }
+    if (sharpness)
+    {
+        const char *e = getenv("WINE_FULLSCREEN_FSR_STRENGTH");
+        if (e)
+        {
+            sharpness_int = atoi(e);
+        }
+        *sharpness = (float) sharpness_int / 10.0f;
+    }
+    TRACE("is_fsr: %s, sharpness: %2.4f\n", is_fsr ? "TRUE" : "FALSE", sharpness ? *sharpness : 0.0f);
+    return is_fsr;
 }
 
 HMONITOR fs_hack_monitor_from_rect(const RECT *in_rect)
