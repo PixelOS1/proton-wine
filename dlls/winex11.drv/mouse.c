@@ -3,6 +3,7 @@
  *
  * Copyright 1998 Ulrich Weigand
  * Copyright 2007 Henri Verbeet
+ * Copyright 2022 Vince McMullin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +19,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+/*
+* Geeral comment on Proton Update from PixelOS
+* There were issues compiling with new rawmouseinput feedback.
+* These issues have been fixed.
+*/
 
 #include "config.h"
 
@@ -2174,7 +2181,7 @@ static BOOL X11DRV_RawTouchEvent( XGenericEventCookie *xev )
     DWORD flags = 0;
     POINT pos;
 
-    if (!map_raw_event_coords( event, &input )) return FALSE;
+    if (!map_raw_event_coords( event, &input, &rawinput )) return FALSE;
     if (!(input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE)) return FALSE;
     pos.x = input.u.mi.dx;
     pos.y = input.u.mi.dy;
