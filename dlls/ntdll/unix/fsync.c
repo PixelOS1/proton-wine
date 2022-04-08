@@ -2,6 +2,7 @@
  * futex-based synchronization objects
  *
  * Copyright (C) 2018 Zebediah Figura
+ * Copyright (C) 2022 Vince McMullin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +18,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+/*
+* General comment from PixeLOS. 
+* struct futex_waitv has been enabled by default.
+* Must have a kernel build that supports these changes.
+*/
 
 #if 0
 #pragma makedep unix
@@ -63,18 +70,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(fsync);
 
 /* futex_waitv interface */
 
-#ifndef __NR_futex_waitv
-
 # define __NR_futex_waitv 449
-# define FUTEX_32 2
 struct futex_waitv {
     uint64_t   val;
     uint64_t   uaddr;
     uint32_t   flags;
     uint32_t __reserved;
 };
-
-#endif
 
 #define u64_to_ptr(x) (void *)(uintptr_t)(x)
 
@@ -108,7 +110,7 @@ static inline void futex_vector_set( struct futex_waitv *waitv, int *addr, int v
 {
     waitv->uaddr = (uintptr_t) addr;
     waitv->val = val;
-    waitv->flags = FUTEX_32;
+    waitv->flags = 2;
     waitv->__reserved = 0;
 }
 
